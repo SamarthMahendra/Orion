@@ -51,7 +51,7 @@ namespace orion {
         // - Task queue
         queue<Task> tasks;
         // - Synchronization primitives (mutex, condition variable)
-        std::mutex mutex;
+        std::mutex tasks_mutex;
         std::condition_variable condition;
     };
 
