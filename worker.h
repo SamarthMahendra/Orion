@@ -5,10 +5,10 @@
 #ifndef WORKER_H
 #define WORKER_H
 
-#pragma once
-
 // PURPOSE:
 // --------
+// Defines a Worker: an execution unit responsible for running Tasks.
+//
 // Defines a Worker: an execution unit responsible for running Tasks.
 //
 // A Worker:
