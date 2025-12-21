@@ -41,7 +41,10 @@ namespace orion {
 
     class Worker {
     public:
-        // TODO:
+        // - Constructor with reference to ObjectStore explicit cuz of single-argument and avoid implicit conversions
+        // we don't want implicit conversions cuz it can lead to unexpected behavior and bugs
+        // ex : Worker w = someObjectStore; // implicit conversion, not desired now obj = Worker(someObjectStore); // explicit, clear
+        explicit Worker(ObjectStore& store);
         // - Method to submit a task to this worker.
         void submit(Task task);
         // - Method to peek at the next available task without executing it.
@@ -57,6 +60,7 @@ namespace orion {
         // - Synchronization primitives (mutex, condition variable)
         std::mutex tasks_mutex;
         std::condition_variable cv;
+        ObjectStore& store_;
     };
 
 }
