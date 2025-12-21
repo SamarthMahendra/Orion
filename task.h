@@ -29,7 +29,6 @@
 
 namespace orion {
 
-    // TODO:
     // - Define TaskId type
     // - Define Task struct/class
     // - Store a callable representing the work
