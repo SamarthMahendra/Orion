@@ -32,6 +32,7 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include "object_store.h"
 #include <functional>
 #include <optional>
 #include <any>
@@ -46,7 +47,7 @@ namespace orion {
         // ex : Worker w = someObjectStore; // implicit conversion, not desired now obj = Worker(someObjectStore); // explicit, clear
         explicit Worker(ObjectStore& store);
         // - Method to submit a task to this worker.
-        void submit(Task task);
+        ObjectRef submit(Task task);
         // - Method to peek at the next available task without executing it.
         std::optional<Task> peek();
         // - Method to execute one task if available.
@@ -56,7 +57,7 @@ namespace orion {
     private:
         // TODO:
         // - Task queue
-        std:: queue<Task> task_queue;
+        std::queue<std::pair<Task, ObjectRef>> task_queue;
         // - Synchronization primitives (mutex, condition variable)
         std::mutex tasks_mutex;
         std::condition_variable cv;

@@ -7,7 +7,7 @@
 #include <string>
 #include <functional>
 #include <any>
-
+#include <utility>
 
 
 // PURPOSE:
@@ -29,14 +29,23 @@
 
 namespace orion {
 
-    // - Define TaskId type
-    // - Define Task struct/class
-    // - Store a callable representing the work
-    // - Store the task's ID
     struct Task {
         std::string id;
         std::function<std::any()> work;
+
+
+        // Accept ANY callable that returns ANY type,
+        // and store it as a std::function<std::any()>.
+        // type erasure.
+        // F&& f (universal / forwarding reference)
+        // [fn = std::forward<F>(f)] Create a new lambda that owns the callable.
+        template<typename F>
+        Task(std::string id, F &&f)
+            : id(std::move(id)),
+              work([fn = std::forward<F>(f)]() -> std::any {
+                  return fn();
+              }) {}
     };
 
-}
+} // namespace orion
 

@@ -6,6 +6,8 @@
 #define OBJECT_STORE_H
 #include <mutex>
 #include <unordered_map>
+#include <any>
+#include <optional>
 
 #include "object_ref.h"
 

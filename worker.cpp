@@ -35,32 +35,31 @@ namespace orion {
     : store_(store) {}
 
 
-        void Worker::submit(Task task) {
+        ObjectRef Worker::submit(Task task) {
             ObjectRef ref{task.id};
             {
               // using lock guard for automatic mutex management instead of manual lock/unlock to avoid deadlocks
               std::lock_guard<std::mutex> lock(tasks_mutex);
               // using move to avoid copying the task, don't change
 
-              task_queue.push(std::move(task));
+              task_queue.push({std::move(task), ref});
             }
             cv.notify_one(); // Notify one waiting thread that a new task is available
+            return ref;
         }
 
         void Worker::run() {
-            std::pair<Task, ObjectRef> item;
-            {
-                std::unique_lock<std::mutex> lock(tasks_mutex);
-                if (task_queue.empty()) {
-                    return std::nullopt;
-                }
-                task = std::move(task_queue.front());
-                task_queue.pop();
+            std::unique_lock<std::mutex> lock(tasks_mutex);
+            if (task_queue.empty()) {
+                return;
             }
 
+            std::pair<Task, ObjectRef> item = std::move(task_queue.front());
+            task_queue.pop();
+            lock.unlock();
 
             // run the task
-            std::any result = task.work();
+            std::any result = item.first.work();
             store_.put(item.second.id, std::move(result));
         }
         std::optional<Task> Worker::peek() {
@@ -68,6 +67,6 @@ namespace orion {
             if (task_queue.empty()) {
                 return std::nullopt;
             }
-            return task_queue.front();
+            return task_queue.front().first;
         }
 }
