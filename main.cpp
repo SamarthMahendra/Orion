@@ -9,32 +9,37 @@
 #include <iostream>
 #include <any>        // ✅ REQUIRED for std::any_cast
 #include <string>     // ✅ fixed typo
+#include "scheduler.h"
 
 
 int main(){
     orion::ObjectStore store;
     orion::Worker worker(store);
+    orion::Scheduler scheduler(worker, store);
 
-    orion::Task task{
-        "task-1",
-        []() -> std::any {
-            return 21 * 2;
-        }
+    orion::Task t1{
+        "A",
+        {},
+        [] { return std::any(10); }
     };
 
-    // Submit task
-    orion::ObjectRef ref = worker.submit(task);
+    orion::Task t2{
+        "B",
+        { orion::ObjectRef{"A"} },
+        [] { return std::any(20); }
+    };
 
-    // Execute task (in real systems, this would be another thread/process)
-    worker.run();
+    scheduler.submit(t1);
+    scheduler.submit(t2);
 
-    // BLOCK until result exists
-    std::any result = store.get_blocking(ref.id);
+    scheduler.schedule();
+    worker.run();   // runs A
 
-    std::cout << "Result: "
-              << std::any_cast<int>(result)
-              << std::endl;
+    std::cout << std::any_cast<int>(store.get_blocking("A")) << std::endl;
+    scheduler.on_object_created("A");
+    scheduler.schedule();
+    worker.run();   // runs B
+    std::cout << std::any_cast<int>(store.get_blocking("B")) << std::endl;
 
     return 0;
-
 }

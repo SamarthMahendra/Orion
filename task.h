@@ -8,7 +8,7 @@
 #include <functional>
 #include <any>
 #include <utility>
-
+#include "object_ref.h"
 
 // PURPOSE:
 // --------
@@ -32,6 +32,7 @@ namespace orion {
     struct Task {
         std::string id;
         std::function<std::any()> work;
+        std::vector<ObjectRef> deps;
 
 
         // Accept ANY callable that returns ANY type,
@@ -40,8 +41,11 @@ namespace orion {
         // F&& f (universal / forwarding reference)
         // [fn = std::forward<F>(f)] Create a new lambda that owns the callable.
         template<typename F>
-        Task(std::string id, F &&f)
+        Task(std::string id,
+             std::vector<ObjectRef> deps,
+             F&& f)
             : id(std::move(id)),
+              deps(std::move(deps)),
               work([fn = std::forward<F>(f)]() -> std::any {
                   return fn();
               }) {}
