@@ -48,20 +48,33 @@ namespace orion {
             return ref;
         }
 
-        void Worker::run() {
+    void Worker::run() {
+        // Dequeue a task
+        std::pair<Task, ObjectRef> item = [&] {
             std::unique_lock<std::mutex> lock(tasks_mutex);
             if (task_queue.empty()) {
-                return;
+                throw std::runtime_error("run() called with empty queue");
             }
-
-            std::pair<Task, ObjectRef> item = std::move(task_queue.front());
+            auto v = std::move(task_queue.front());
             task_queue.pop();
-            lock.unlock();
+            return v;
+        }();
 
-            // run the task
-            std::any result = item.first.work();
-            store_.put(item.second.id, std::move(result));
+        // Resolve dependency values (blocking is OK here)
+        std::vector<std::any> args;
+        args.reserve(item.first.deps.size());
+
+        for (const auto& ref : item.first.deps) {
+            args.push_back(store_.get_blocking(ref.id));
         }
+
+        // Execute task with resolved dependency values
+        std::any result = item.first.work(std::move(args));
+
+        // Publish result to object store
+        store_.put(item.second.id, std::move(result));
+    }
+
         std::optional<Task> Worker::peek() {
             std::lock_guard<std::mutex> lock(tasks_mutex);
             if (task_queue.empty()) {
