@@ -21,7 +21,10 @@ namespace orion::distributed {
     public:
         // num_workers = worker threads on this node
         // port = RPC port (used later)
-        NodeRuntime(size_t num_workers, int port);
+        NodeRuntime(size_t num_workers,
+                          int port,
+                          std::string cluster_address="");
+
 
         // Start node (workers + RPC server later)
         void start();
@@ -40,11 +43,11 @@ namespace orion::distributed {
         size_t num_workers_;
         int port_;
 
-        // for cluster to know what node
-        std::string node_id_;
-
         // to know what cluster does this node belong to
         std::string cluster_address_;
+
+        // for cluster to know what node
+        std::string node_id_;
 
         bool running_ = false;
     };
