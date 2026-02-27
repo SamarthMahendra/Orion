@@ -86,26 +86,51 @@ struct ObjectRef {
 ## Usage
 
 ```cpp
-// Create object store and workers
-orion::ObjectStore store;
-orion::Worker w1(store), w2(store);
-orion::Scheduler scheduler({&w1, &w2}, store);
 
-// Start workers
-w1.start();
-w2.start();
+    NodeRuntime n1(2, 5001);
+    NodeRuntime n2(2, 5002);
 
-// Submit tasks
-orion::Task task{"T1", {}, [](std::vector<std::any>) { return 42; }};
-scheduler.submit(task);
-scheduler.schedule();
+    n1.start();
+    n2.start();
 
-// Wait for result
-auto result = store.get_blocking("T1");
+    NodeRegistry registry;
+    registry.register_node({"node-1", "localhost:5001", 2, true});
+    registry.register_node({"node-2", "localhost:5002", 2, true});
 
-// Clean up
-w1.stop();
-w2.stop();
+    InProcessNodeClient client;
+    client.add_node("node-1", &n1);
+    client.add_node("node-2", &n2);
+
+    ClusterScheduler cluster(registry, client);
+
+    // Task A
+    orion::Task t1{
+        "A",
+        {},
+        [](const std::vector<std::any>&) -> std::any { return 10; }
+    };
+
+    // Task B depends on A
+    orion::Task t2{
+        "B",
+        {orion::ObjectRef{"A"}},
+        [](std::vector<std::any> args) -> std::any {
+            int a = std::any_cast<int>(args[0]);
+            return a + 32;
+        }
+    };
+
+    cluster.submit(t1);
+    cluster.submit(t2);
+
+    // In v0.2 we assumed locations at dispatch time;
+    // real completion tracking comes next (heartbeats/object reports).
+    // For now you can just sleep or block at node-local store if you expose it.
+
+    std::cout << "Cluster scheduled tasks.\n";
+
+    n1.stop();
+    n2.stop();
 ```
 
 See `main.cpp` for a complete parallel execution example.
