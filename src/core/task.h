@@ -13,6 +13,8 @@ namespace orion {
         std::string id;
         std::vector<ObjectRef> deps;
 
+        Task() = default;   // 👈 allows `Task task;`
+
         // ALWAYS takes dependency values
         std::function<std::any(std::vector<std::any>)> work;
 
