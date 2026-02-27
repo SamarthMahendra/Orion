@@ -19,14 +19,13 @@ namespace orion {
         void submit(Task task);
 
         // Called when a new object is created
-        void on_object_created(const ObjectId& id);
+        bool on_object_created(const ObjectId& id);
 
         // Try to schedule runnable tasks
         void schedule();
 
     private:
         bool deps_ready(const Task& task);
-
         std::vector<Worker*> workers_;
         size_t next_worker_ = 0;
         ObjectStore& store_;

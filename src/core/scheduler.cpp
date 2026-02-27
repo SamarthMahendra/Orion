@@ -10,9 +10,11 @@ namespace orion {
         // Wire automatic notification: when ObjectStore.put() is called,
         // automatically notify scheduler of new objects
         store_.set_on_put_callback([this](const ObjectId& id) {
-            this->on_object_created(id);
+        bool changed = this->on_object_created(id);
+        if (changed) {
             this->schedule();
-        });
+        }
+    });
     }
 
     void Scheduler::submit(Task task) {
@@ -25,18 +27,21 @@ namespace orion {
         }
     }
 
-    void Scheduler::on_object_created(const ObjectId&) {
+    bool Scheduler::on_object_created(const ObjectId&) {
         std::lock_guard<std::mutex> lock(mutex_);
 
+        bool moved = false;
         auto it = pending_.begin();
         while (it != pending_.end()) {
             if (deps_ready(*it)) {
                 ready_.push(std::move(*it));
                 it = pending_.erase(it);
+                moved = true;
             } else {
                 ++it;
             }
         }
+        return moved;
     }
 
     void Scheduler::schedule() {

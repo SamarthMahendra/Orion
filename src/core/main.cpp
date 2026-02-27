@@ -22,24 +22,36 @@ int main() {
     w2.start();
 
     // Heavy CPU-bound task (~1 second busy loop)
-    auto heavy_task = [](std::vector<std::any>) -> std::any {
+    // Heavy CPU-bound task (~1 second busy loop)
+    auto heavy_task1 = [](std::vector<std::any>) -> std::any {
         auto start = steady_clock::now();
         while (steady_clock::now() - start < seconds(1)) {
             // busy spin
         }
+        std::cout << "Task 1\n";
         return std::any(1);
     };
+
+    auto heavy_task2 = [](std::vector<std::any>) -> std::any {
+        auto start = steady_clock::now();
+        while (steady_clock::now() - start < seconds(1)) {
+            // busy spin
+        }
+        std::cout << "Task 2\n";
+        return std::any(1);
+    };
+
 
     orion::Task t1{
         "T1",
         {},
-        heavy_task
+        heavy_task1
     };
 
     orion::Task t2{
         "T2",
-        {},
-        heavy_task
+        {orion::ObjectRef{"T1"}},
+        heavy_task2
     };
 
     auto t0 = steady_clock::now();

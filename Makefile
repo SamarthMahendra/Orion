@@ -2,7 +2,7 @@ CXX := clang++
 CXXFLAGS := -std=c++23 -Wall -Wextra -O2 -pthread
 
 TARGET := main
-SRCS := main.cpp worker.cpp object_store.cpp scheduler.cpp
+SRCS := src/main.cpp src/core/worker.cpp src/core/object_store.cpp src/core/scheduler.cpp src/local/runtime.cpp src/distributed/node_runtime.cpp
 OBJS := $(SRCS:.cpp=.o)
 
 all: $(TARGET)
