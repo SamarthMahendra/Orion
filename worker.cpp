@@ -55,14 +55,18 @@ namespace orion {
             return ref;
         }
     void Worker::start() {
+        {
+        std::lock_guard<std::mutex> lock(tasks_mutex);
         running_ = true;
-        worker_thread_ = std::thread(&Worker::run_loop, this);
-        std::cout << "Starting worker thread..." << std::endl;
+        }
+    worker_thread_ = std::thread(&Worker::run_loop, this);
+    std::cout << "Starting worker thread..." << std::endl;
     }
 
     void Worker::stop() {
         {
             std::lock_guard<std::mutex> lock(tasks_mutex);
+            if (!running_) return;
             running_ = false;
         }
         cv.notify_all();
@@ -96,13 +100,13 @@ namespace orion {
 
 
     void Worker::run_one(std::pair<Task, ObjectRef> item) {
+
         std::vector<std::any> args;
         args.reserve(item.first.deps.size());
 
         for (const auto& ref : item.first.deps) {
             args.push_back(store_.get_blocking(ref.id));
         }
-
         std::any result = item.first.work(std::move(args));
         store_.put(item.second.id, std::move(result));
     }
