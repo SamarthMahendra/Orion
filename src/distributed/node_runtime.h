@@ -29,6 +29,9 @@ namespace orion::distributed {
         // Graceful shutdown
         void stop();
 
+        // this will let cluster know hi i am here with x cores
+        void register_with_cluster() const;   // 👈 NEW
+
         // Access local runtime (useful for testing)
         orion::Runtime& local_runtime();
 
@@ -36,6 +39,12 @@ namespace orion::distributed {
         std::unique_ptr<orion::Runtime> runtime_;
         size_t num_workers_;
         int port_;
+
+        // for cluster to know what node
+        std::string node_id_;
+
+        // to know what cluster does this node belong to
+        std::string cluster_address_;
 
         bool running_ = false;
     };
