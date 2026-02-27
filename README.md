@@ -18,6 +18,11 @@ Orion models computation as a **dataflow graph**: tasks declare their inputs as 
 
 ### Core Layer (`src/core/`)
 
+<img width="1512" height="1314" alt="image" src="https://github.com/user-attachments/assets/cbbf2a5f-81b9-4fb3-bd69-4b6181a546b5" />
+
+https://excalidraw.com/#json=vnPHTMiI-ZkdczEkcpeKh,bthOxQcgldqqnRsoox0SSg
+
+
 #### Task (`task.h`)
 
 The fundamental unit of work.
