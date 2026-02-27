@@ -305,13 +305,44 @@ CXX=g++ make
 - [x] Multi-node dependency-chaining demo in `main.cpp`
 
 ### In Progress / Planned
+
+#### Phase 2 — Real Transport & Fault Tolerance
 - [ ] Real RPC transport (gRPC or custom TCP) replacing `InProcessNodeClient`
 - [ ] Node-reported object location confirmations (replacing optimistic v0.2 assumption)
 - [ ] Heartbeat-based node liveness and dead-node eviction
+- [ ] Task failure handling and retry with configurable policies
 - [ ] Work-stealing across nodes
-- [ ] Task failure handling and retry
-- [ ] Resource-aware scheduling (CPU/memory hints)
-- [ ] Metrics and observability
+
+#### Phase 3 — Ad-hoc Distributed Data Computation
+- [ ] Cross-process object serialization (replace `std::any` with a wire format)
+- [ ] Cross-node object transfer — automatic fetch when an input object lives on a remote node
+- [ ] Distributed object store (shared-memory + TCP pull, similar to Ray Plasma)
+- [ ] Streaming / chunked object support for large datasets
+- [ ] Map / reduce primitives built on top of the task graph
+
+#### Phase 4 — Dynamic Task Graphs
+- [ ] Tasks can submit sub-tasks at runtime (nested parallelism)
+- [ ] Support for recursive and speculative task patterns
+- [ ] `ObjectRef` as a first-class future passable between tasks at runtime
+- [ ] Group / barrier synchronisation primitives
+
+#### Phase 5 — GPU & Heterogeneous Scheduling
+- [ ] Resource annotations on `Task` (CPU cores, GPU count, memory)
+- [ ] GPU-aware node selection in `ClusterScheduler` / `NodeRegistry`
+- [ ] CUDA stream integration for GPU task execution
+- [ ] Mixed CPU + GPU pipeline scheduling
+
+#### Phase 6 — Global Control Store (GCS)
+- [ ] Centralized GCS process for cluster-wide state (node registry, object table)
+- [ ] Automatic node discovery and registration via GCS on `NodeRuntime::start()`
+- [ ] Fault-tolerant GCS with persistent backing store
+- [ ] Pub/sub object-ready notifications replacing polling
+
+#### Phase 7 — Dashboard & Observability
+- [ ] REST API exposing cluster state (nodes, tasks, object locations)
+- [ ] Web dashboard: live task graph visualisation, node health, throughput metrics
+- [ ] Distributed tracing (task lineage from submission to completion)
+- [ ] Prometheus-compatible metrics endpoint
 
 ---
 
