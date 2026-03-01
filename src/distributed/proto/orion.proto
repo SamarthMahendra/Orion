@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package orion;
+
+service ClusterHead {
+  rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeReply);
+  rpc SubmitTask(TaskRequest) returns (TaskReply);
+  rpc ReportObjectCreated(ObjectReport) returns (Empty);
+  rpc GetObjectLocation(ObjectLocationRequest) returns (ObjectLocationReply);
+}
+
+service NodeService {
+  rpc ExecuteTask(TaskRequest) returns (TaskReply);
+  rpc GetObject(ObjectLocationRequest) returns (ObjectData);
+}
+
+message RegisterNodeRequest {
+  string node_id = 1;
+  string address = 2;
+}
+
+message RegisterNodeReply {
+  bool success = 1;
+}
+
+message TaskRequest {
+  string task_id = 1;
+  repeated string dep_ids = 2;
+  string function_name = 3;
+  repeated bytes args = 4;
+}
+
+message TaskReply {
+  bool accepted = 1;
+  string node_id = 2;
+}
+
+message ObjectReport {
+  string object_id = 1;
+  string node_id = 2;
+}
+
+message ObjectLocationRequest {
+  string object_id = 1;
+}
+
+message ObjectLocationReply {
+  string node_id = 1;
+  string address = 2;
+}
+
+message ObjectData {
+  string object_id = 1;
+  bytes data = 2;
+}
+
+message Empty {}
