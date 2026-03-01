@@ -23,7 +23,9 @@ namespace orion::distributed {
         // port = RPC port (used later)
         NodeRuntime(size_t num_workers,
                           int port,
-                          std::string cluster_address="");
+                          std::string cluster_address = "",
+                          std::string node_id = "",
+                          std::string address = "");
 
 
         // Start node (workers + RPC server later)
@@ -38,6 +40,9 @@ namespace orion::distributed {
         // Access local runtime (useful for testing)
         orion::Runtime& local_runtime();
 
+        const std::string& node_id() const { return node_id_; }
+        const std::string& address()  const { return address_; }
+
     private:
         std::unique_ptr<orion::Runtime> runtime_;
         size_t num_workers_;
@@ -48,6 +53,7 @@ namespace orion::distributed {
 
         // for cluster to know what node
         std::string node_id_;
+        std::string address_;     // "host:port" reported to head
 
         bool running_ = false;
     };
