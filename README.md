@@ -155,7 +155,28 @@ Concrete `NodeClient` for testing and single-binary cluster simulation. Holds ra
 
 ## Usage Examples
 
-### Single-process (Local Runtime)
+### Multi-node cluster (gRPC)
+
+Start the cluster head server:
+
+```bash
+./head 50050
+```
+
+Start one or more worker nodes in separate terminals:
+
+```bash
+./node 50050 6001 node-1
+./node 50050 6002 node-2
+```
+
+Submit test tasks to the cluster:
+
+```bash
+./submit_test 50050
+```
+
+### Single-process Debug (Local Runtime)
 
 ```cpp
 
@@ -259,9 +280,15 @@ Orion/
 │       ├── cluster/
 │       │   ├── node_registry.{h,cpp}     # Cluster membership + node selection
 │       │   └── cluster_scheduler.{h,cpp} # Cross-node dataflow scheduler
-│       └── rpc/
-│           ├── node_client.h             # Abstract RPC interface
-│           └── inprocess_node_client.h   # In-process stub (testing)
+│       ├── rpc/
+│       │   ├── node_client.h             # Abstract RPC interface
+│       │   ├── inprocess_node_client.h   # In-process stub (testing)
+│       │   └── grpc_node_client.h        # Real gRPC transport implementation
+│       └── proto/
+│           └── orion.proto               # cluster communication definitions
+├── head_main.cpp                         # Cluster Head server entry point
+├── node_main.cpp                         # Worker Node entry point
+├── submit_test.cpp                       # gRPC task submission test
 ├── Makefile
 └── LICENSE
 ```
@@ -308,11 +335,12 @@ CXX=g++ make
 - [x] `ClusterScheduler` (cross-node dependency tracking and dispatch)
 - [x] `NodeClient` abstraction + `InProcessNodeClient` for in-process testing
 - [x] Multi-node dependency-chaining demo in `main.cpp`
+- [x] **Real RPC transport using gRPC** (`head`, `node`, `submit_test` executables)
 
 ### In Progress / Planned
 
 #### Phase 2 — Real Transport & Fault Tolerance
-- [ ] Real RPC transport (gRPC or custom TCP) replacing `InProcessNodeClient`
+- [x] Real RPC transport (gRPC or custom TCP) replacing `InProcessNodeClient`
 - [ ] Node-reported object location confirmations (replacing optimistic v0.2 assumption)
 - [ ] Heartbeat-based node liveness and dead-node eviction
 - [ ] Task failure handling and retry with configurable policies

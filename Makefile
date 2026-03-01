@@ -1,6 +1,20 @@
 CXX := clang++
-CXXFLAGS := -std=c++23 -Wall -Wextra -O2 -pthread
 
+# ─────────────────────────────────────────────
+# Build modes
+# ─────────────────────────────────────────────
+BASE_FLAGS := -std=c++23 -Wall -Wextra -pthread
+RELEASE_FLAGS := -O2
+DEBUG_FLAGS := -O0 -g
+ASAN_FLAGS := -fsanitize=address -fno-omit-frame-pointer
+
+# Default build = release
+CXXFLAGS := $(BASE_FLAGS) $(RELEASE_FLAGS)
+LDFLAGS :=
+
+# ─────────────────────────────────────────────
+# gRPC / Protobuf
+# ─────────────────────────────────────────────
 export PKG_CONFIG_PATH := /opt/homebrew/opt/grpc/lib/pkgconfig:/opt/homebrew/opt/protobuf/lib/pkgconfig:/opt/homebrew/opt/abseil/lib/pkgconfig
 
 SRC := src
@@ -9,49 +23,110 @@ GEN_DIR := $(SRC)/distributed/generated
 GRPC_INC := $(shell pkg-config --cflags grpc++ protobuf) -I$(SRC)
 GRPC_LIB := $(shell pkg-config --libs grpc++ protobuf)
 
+# ─────────────────────────────────────────────
+# Generated proto files
+# ─────────────────────────────────────────────
 GEN_SRCS := \
-    $(GEN_DIR)/orion.pb.cc \
-    $(GEN_DIR)/orion.grpc.pb.cc
+	$(GEN_DIR)/orion.pb.cc \
+	$(GEN_DIR)/orion.grpc.pb.cc
 
 GEN_OBJS := $(GEN_SRCS:.cc=.o)
 
+# ─────────────────────────────────────────────
+# Source groups
+# ─────────────────────────────────────────────
 CORE_SRCS := \
-    $(SRC)/core/worker.cpp \
-    $(SRC)/core/object_store.cpp \
-    $(SRC)/core/scheduler.cpp \
-    $(SRC)/local/runtime.cpp
+	$(SRC)/core/worker.cpp \
+	$(SRC)/core/object_store.cpp \
+	$(SRC)/core/scheduler.cpp \
+	$(SRC)/local/runtime.cpp
 
 CLUSTER_SRCS := \
-    $(SRC)/distributed/cluster/cluster_scheduler.cpp \
-    $(SRC)/distributed/cluster/node_registry.cpp
+	$(SRC)/distributed/cluster/cluster_scheduler.cpp \
+	$(SRC)/distributed/cluster/node_registry.cpp
+
+FUNC_SRCS := \
+	$(SRC)/distributed/functions/function_registry.cpp
 
 NODE_RT_SRC := $(SRC)/distributed/node_runtime.cpp
 
 MAIN_SRCS := $(SRC)/main.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC)
+HEAD_SRCS := $(SRC)/head_main.cpp $(CORE_SRCS) $(CLUSTER_SRCS) $(NODE_RT_SRC)
+NODE_SRCS := $(SRC)/node_main.cpp $(CORE_SRCS) $(NODE_RT_SRC) $(FUNC_SRCS)
+SUBMIT_SRCS := $(SRC)/submit_test.cpp
+
 MAIN_OBJS := $(MAIN_SRCS:.cpp=.o)
-
-HEAD_SRCS := $(SRC)/head_main.cpp $(CORE_SRCS) $(CLUSTER_SRCS)
 HEAD_OBJS := $(HEAD_SRCS:.cpp=.o)
-
-NODE_SRCS := $(SRC)/node_main.cpp $(CORE_SRCS) $(NODE_RT_SRC)
 NODE_OBJS := $(NODE_SRCS:.cpp=.o)
+SUBMIT_OBJS := $(SUBMIT_SRCS:.cpp=.o)
 
+# ─────────────────────────────────────────────
+# Targets
+# ─────────────────────────────────────────────
 main: $(MAIN_OBJS) $(GEN_OBJS)
-	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) -o main
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o main
 
 head: $(HEAD_OBJS) $(GEN_OBJS)
-	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) -o head
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o head
 
 node: $(NODE_OBJS) $(GEN_OBJS)
-	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) -o node
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o node
 
+submit_test: $(SUBMIT_OBJS) $(GEN_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(GRPC_LIB) $(LDFLAGS) -o submit_test
+
+# ─────────────────────────────────────────────
+# Debug builds
+# ─────────────────────────────────────────────
+main_debug:
+	$(MAKE) main CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS)"
+
+head_debug:
+	$(MAKE) head CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS)"
+
+node_debug:
+	$(MAKE) node CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS)"
+
+# ─────────────────────────────────────────────
+# AddressSanitizer builds
+# ─────────────────────────────────────────────
+main_asan:
+	$(MAKE) main \
+	CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS) $(ASAN_FLAGS)" \
+	LDFLAGS="$(ASAN_FLAGS)"
+
+head_asan:
+	$(MAKE) head \
+	CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS) $(ASAN_FLAGS)" \
+	LDFLAGS="$(ASAN_FLAGS)"
+
+node_asan:
+	$(MAKE) node \
+	CXXFLAGS="$(BASE_FLAGS) $(DEBUG_FLAGS) $(ASAN_FLAGS)" \
+	LDFLAGS="$(ASAN_FLAGS)"
+
+# ─────────────────────────────────────────────
+# Compile rules
+# ─────────────────────────────────────────────
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(GRPC_INC) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(GRPC_INC) -MMD -MP -c $< -o $@
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) $(GRPC_INC) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(GRPC_INC) -MMD -MP -c $< -o $@
 
+# auto deps
+-include $(MAIN_OBJS:.o=.d)
+-include $(HEAD_OBJS:.o=.d)
+-include $(NODE_OBJS:.o=.d)
+-include $(SUBMIT_OBJS:.o=.d)
+-include $(GEN_OBJS:.o=.d)
+
+# ─────────────────────────────────────────────
+# Clean
+# ─────────────────────────────────────────────
 clean:
-	rm -f $(SRC)/**/*.o main head node 2>/dev/null || true
+	rm -f $(SRC)/**/*.o $(SRC)/**/*.d $(SRC)/*.o $(SRC)/*.d main head node submit_test 2>/dev/null || true
 
-.PHONY: main head node clean
+.PHONY: main head node submit_test clean \
+	main_debug head_debug node_debug \
+	main_asan head_asan node_asan
