@@ -108,6 +108,28 @@ namespace orion {
             args.push_back(store_.get_blocking(ref.id));
         }
         std::any result = item.first.work(std::move(args));
+
+
+        std::cout << "[Worker] Task result type: " << result.type().name();
+
+        if (result.type() == typeid(int)) {
+            std::cout << " value=" << std::any_cast<int>(result);
+        }
+        else if (result.type() == typeid(double)) {
+            std::cout << " value=" << std::any_cast<double>(result);
+        }
+        else if (result.type() == typeid(std::string)) {
+            std::cout << " value=" << std::any_cast<std::string>(result);
+        }
+        else if (!result.has_value()) {
+            std::cout << " <empty>";
+        }
+        else {
+            std::cout << " <unprintable>";
+        }
+
+        std::cout << "\n";
+
         store_.put(item.second.id, std::move(result));
     }
 }

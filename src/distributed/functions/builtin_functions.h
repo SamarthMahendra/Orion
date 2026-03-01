@@ -5,6 +5,7 @@
 #ifndef BUILTIN_FUNCTIONS_H
 #define BUILTIN_FUNCTIONS_H
 #pragma once
+#include <stdexcept>
 #include "function_registry.h"
 
 namespace orion::distributed {
@@ -13,6 +14,9 @@ namespace orion::distributed {
 
         registry.register_function("add",
             [](std::vector<std::any> args) -> std::any {
+                if (args.size() < 2)
+                    throw std::runtime_error("add: expected 2 args, got " +
+                                             std::to_string(args.size()));
                 int a = std::any_cast<int>(args[0]);
                 int b = std::any_cast<int>(args[1]);
                 return a + b;
@@ -20,6 +24,9 @@ namespace orion::distributed {
 
         registry.register_function("mul",
             [](std::vector<std::any> args) -> std::any {
+                if (args.size() < 2)
+                    throw std::runtime_error("mul: expected 2 args, got " +
+                                             std::to_string(args.size()));
                 int a = std::any_cast<int>(args[0]);
                 int b = std::any_cast<int>(args[1]);
                 return a * b;

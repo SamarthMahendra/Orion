@@ -30,13 +30,16 @@ void ClusterScheduler::schedule() {
     std::queue<orion::Task> next_pending;
 
     while (true) {
-        orion::Task task;
+        std::optional<orion::Task> task_opt;
         {
             std::lock_guard<std::mutex> lock(mu_);
             if (pending_.empty()) break;
-            task = std::move(pending_.front());
+
+            task_opt.emplace(std::move(pending_.front()));   // ✅ move-construct
             pending_.pop();
         }
+
+        orion::Task task = std::move(*task_opt);
 
         if (!deps_ready_(task)) {
             next_pending.push(std::move(task));
@@ -56,10 +59,12 @@ void ClusterScheduler::schedule() {
         // Dispatch
         // In v0.2, we assume output object lives on the node we dispatch to.
         // Later, the node will confirm via RPC callback/event.
+        // Save id before move — task.id is empty after std::move.
+        const std::string task_id = task.id;
         client_.submit_task(node.node_id, std::move(task));
 
-        // Actually store correct output location
-        on_object_created(task.id, node.node_id);
+        // Record expected output location optimistically
+        on_object_created(task_id, node.node_id);
     }
 
     // restore pending queue
