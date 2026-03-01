@@ -23,6 +23,40 @@ Orion models computation as a **dataflow graph**: tasks declare their inputs as 
 https://excalidraw.com/#json=vnPHTMiI-ZkdczEkcpeKh,bthOxQcgldqqnRsoox0SSg
 
 
+## Project Structure
+
+```
+Orion/
+├── src/
+│   ├── main.cpp                          # Entry point / integration demo
+│   ├── core/
+│   │   ├── task.h                        # Task struct
+│   │   ├── object_ref.h                  # ObjectRef / ObjectId
+│   │   ├── object_store.{h,cpp}          # Thread-safe result store
+│   │   ├── worker.{h,cpp}                # Background-thread executor
+│   │   └── scheduler.{h,cpp}             # Local dataflow scheduler
+│   ├── local/
+│   │   └── runtime.{h,cpp}               # Single-process Runtime façade
+│   └── distributed/
+│       ├── node_runtime.{h,cpp}          # Per-node runtime wrapper
+│       ├── cluster/
+│       │   ├── node_registry.{h,cpp}     # Cluster membership + node selection
+│       │   └── cluster_scheduler.{h,cpp} # Cross-node dataflow scheduler
+│       ├── rpc/
+│       │   ├── node_client.h             # Abstract RPC interface
+│       │   ├── inprocess_node_client.h   # In-process stub (testing)
+│       │   └── grpc_node_client.h        # Real gRPC transport implementation
+│       └── proto/
+│           └── orion.proto               # cluster communication definitions
+├── head_main.cpp                         # Cluster Head server entry point
+├── node_main.cpp                         # Worker Node entry point
+├── submit_test.cpp                       # gRPC task submission test
+├── Makefile
+└── LICENSE
+```
+
+---
+
 #### Task (`task.h`)
 
 The fundamental unit of work.
@@ -261,39 +295,6 @@ n1.stop(); n2.stop();
 
 ---
 
-## Project Structure
-
-```
-Orion/
-├── src/
-│   ├── main.cpp                          # Entry point / integration demo
-│   ├── core/
-│   │   ├── task.h                        # Task struct
-│   │   ├── object_ref.h                  # ObjectRef / ObjectId
-│   │   ├── object_store.{h,cpp}          # Thread-safe result store
-│   │   ├── worker.{h,cpp}                # Background-thread executor
-│   │   └── scheduler.{h,cpp}             # Local dataflow scheduler
-│   ├── local/
-│   │   └── runtime.{h,cpp}               # Single-process Runtime façade
-│   └── distributed/
-│       ├── node_runtime.{h,cpp}          # Per-node runtime wrapper
-│       ├── cluster/
-│       │   ├── node_registry.{h,cpp}     # Cluster membership + node selection
-│       │   └── cluster_scheduler.{h,cpp} # Cross-node dataflow scheduler
-│       ├── rpc/
-│       │   ├── node_client.h             # Abstract RPC interface
-│       │   ├── inprocess_node_client.h   # In-process stub (testing)
-│       │   └── grpc_node_client.h        # Real gRPC transport implementation
-│       └── proto/
-│           └── orion.proto               # cluster communication definitions
-├── head_main.cpp                         # Cluster Head server entry point
-├── node_main.cpp                         # Worker Node entry point
-├── submit_test.cpp                       # gRPC task submission test
-├── Makefile
-└── LICENSE
-```
-
----
 
 ## Building
 
