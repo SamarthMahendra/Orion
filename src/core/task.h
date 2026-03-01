@@ -11,6 +11,8 @@ namespace orion {
 
     struct Task {
         std::string id;
+        std::string function_name;       // wire-safe name; looked up in FunctionRegistry on remote nodes
+        std::vector<std::string> args;   // serialized literal args (4-byte LE ints for now); forwarded to nodes
         std::vector<ObjectRef> deps;
 
         Task() = default;   // 👈 allows `Task task;`
@@ -18,7 +20,7 @@ namespace orion {
         // ALWAYS takes dependency values
         std::function<std::any(std::vector<std::any>)> work;
 
-        // Task with deps
+        // Task with deps (closure version — local use)
         Task(std::string id,
              std::vector<ObjectRef> deps,
              std::function<std::any(std::vector<std::any>)> fn)
@@ -26,7 +28,7 @@ namespace orion {
               deps(std::move(deps)),
               work(std::move(fn)) {}
 
-        // Task without deps
+        // Task without deps (closure version — local use)
         Task(std::string id,
              std::vector<ObjectRef> deps,
              std::function<std::any()> fn)
